@@ -1,3 +1,5 @@
 <resources>
   <string name="app_name">PixabayImageSearcher</string>
+  <string name="pixabayApiKey">8149384-2245e6c7a0a7ec0035a6d1201</string>
+  <string name="pixabayBaseUrl">https://pixabay.com/</string>
 </resources>
