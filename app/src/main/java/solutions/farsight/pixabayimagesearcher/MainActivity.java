@@ -1,11 +1,10 @@
 package solutions.farsight.pixabayimagesearcher;
 
-import android.arch.lifecycle.ViewModel;
 import android.os.Bundle;
-import android.os.PersistableBundle;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.SearchView;
@@ -15,6 +14,7 @@ import butterknife.ButterKnife;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -29,10 +29,10 @@ public class MainActivity extends AppCompatActivity  {
     @BindString(R.string.pixabayBaseUrl) String baseUrl;
     @BindString(R.string.pixabayApiKey) String apiKey;
 
-    private String screenState; //TODO: put screen state information here
-
-    private Call<ImageResult> imageSearchCall;
+    private Call<ImageSearchResult> imageSearchCall;
     private PixabayEndpointInterface pixabayService;
+    private List<ImageResult> dataSet = new ArrayList<ImageResult>();
+    private ImageResultRecyclerAdapter imageResultRecyclerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +40,10 @@ public class MainActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        searchResultView.setAdapter(new ImageResultRecyclerAdapter(new ArrayList<ViewModel>(), R
-            .layout.item));
-        searchResultView.setLayoutManager(new LinearLayoutManager(this));
+        imageResultRecyclerAdapter = new ImageResultRecyclerAdapter(dataSet, R
+            .layout.item);
+        searchResultView.setAdapter(imageResultRecyclerAdapter);
+        searchResultView.setLayoutManager(new GridLayoutManager(this, 2));
         searchResultView.setItemAnimator(new DefaultItemAnimator());
 
         //TODO: move retrofit binding elsewhere.
@@ -66,20 +67,36 @@ public class MainActivity extends AppCompatActivity  {
 
                     String formattedQuery;
                     try {
-                        //TODO: handle multiple calls
+                        //TODO: handle the case where multiple queries come in seq
                         formattedQuery = URLEncoder.encode(query, "UTF-8");
                         imageSearchCall = pixabayService.queryImages(formattedQuery, apiKey);
-                        imageSearchCall.enqueue(new Callback<ImageResult>() {
+                        imageSearchCall.enqueue(new Callback<ImageSearchResult>() {
+
                             @Override
-                            public void onResponse(Call<ImageResult> call, Response<ImageResult> response) {
+                            public void onResponse(Call<ImageSearchResult> call,
+                                Response<ImageSearchResult> response) {
+                                dataSet.clear();
                                 //extract image Url's
-                                for(Hit hit: response.body().getHits()) {
-                                    Log.d(TAG, "Hit " + hit.getPreviewURL());
+
+                                int responseCode = response.code();
+                                if(responseCode!=200) {
+                                    //TODO: error out. for example, 429 too many requests
+                                    return;
                                 }
+
+                                Log.d(TAG, " code " + response.code());
+
+                                int resultCount = response.body().getTotalHits();
+
+                                for(Hit hit: response.body().getHits()) {
+                                    dataSet.add(new ImageResult(hit));
+                                }
+
+                                imageResultRecyclerAdapter.notifyDataSetChanged();
                             }
 
                             @Override
-                            public void onFailure(Call<ImageResult> call, Throwable t) {
+                            public void onFailure(Call<ImageSearchResult> call, Throwable t) {
                                 //TODO: handle error
                             }
                         });
@@ -93,15 +110,33 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState,
-        PersistableBundle persistentState) {
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
         //restore screen state: search term, scroll location
-        super.onRestoreInstanceState(savedInstanceState, persistentState);
+        super.onRestoreInstanceState(savedInstanceState);
+
+        List <Parcelable> list = savedInstanceState.getParcelableArrayList("result");
+
+        if(list!=null) {
+            for (Parcelable p : list) {
+                dataSet.add((ImageResult) p);
+            }
+        }
+
+        imageResultRecyclerAdapter.notifyDataSetChanged();
+
+        Log.d(TAG, "onRestoreInstanceState restored results: " + dataSet.size());
     }
 
+
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    public void onSaveInstanceState(Bundle savedInstanceState) {
         //save screen state: search term, scroll location
-        super.onSaveInstanceState(outState, outPersistentState);
+        super.onSaveInstanceState(savedInstanceState);
+
+        savedInstanceState.putParcelableArrayList("result" ,
+            (ArrayList<? extends Parcelable>) dataSet);
+        savedInstanceState.putString("searchString", searchView.getQuery().toString());
+
+        Log.d(TAG, "onSaveInstanceState save results: " + dataSet.size());
     }
 }

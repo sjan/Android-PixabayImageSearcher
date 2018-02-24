@@ -13,6 +13,6 @@ public interface PixabayEndpointInterface {
     // Callback for the parsed response is the last parameter
 
     @GET("/api")
-    Call<ImageResult> queryImages(@Query("q") String query, @Query("key") String key);
+    Call<ImageSearchResult> queryImages(@Query("q") String query, @Query("key") String key);
 
 }
