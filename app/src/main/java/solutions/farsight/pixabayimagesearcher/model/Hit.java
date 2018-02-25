@@ -1,4 +1,4 @@
-package solutions.farsight.pixabayimagesearcher;
+package solutions.farsight.pixabayimagesearcher.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

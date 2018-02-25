@@ -1,8 +1,9 @@
-package solutions.farsight.pixabayimagesearcher;
+package solutions.farsight.pixabayimagesearcher.view;
 
 import android.arch.lifecycle.ViewModel;
 import android.os.Parcel;
 import android.os.Parcelable;
+import solutions.farsight.pixabayimagesearcher.model.Hit;
 
 /**
  * Created by Stephen on 2/24/2018.
@@ -12,12 +13,15 @@ public class ImageResult extends ViewModel implements Parcelable {
     public final Integer width;
     public final Integer height;
     public final String url;
+    public final String label;
 
     public ImageResult(Hit hit) {
         width = hit.getPreviewWidth();
         height = hit.getPreviewHeight();
         url = hit.getPreviewURL();
+        label = hit.getId();
     }
+
 
     protected ImageResult(Parcel in) {
         if (in.readByte() == 0) {
@@ -31,6 +35,7 @@ public class ImageResult extends ViewModel implements Parcelable {
             height = in.readInt();
         }
         url = in.readString();
+        label = in.readString();
     }
 
     public static final Creator<ImageResult> CREATOR = new Creator<ImageResult>() {
@@ -65,5 +70,6 @@ public class ImageResult extends ViewModel implements Parcelable {
             parcel.writeInt(height);
         }
         parcel.writeString(url);
+        parcel.writeString(label);
     }
 }

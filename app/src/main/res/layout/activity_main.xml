@@ -9,7 +9,7 @@
   <SearchView
     android:id="@+id/searchBox"
     android:layout_width="match_parent"
-    android:layout_height="36dp"
+    android:layout_height="52dp"
     android:iconifiedByDefault="false"
     android:queryHint="Image Search Here"/>
 

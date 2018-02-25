@@ -1,4 +1,4 @@
-package solutions.farsight.pixabayimagesearcher;
+package solutions.farsight.pixabayimagesearcher.model;
 
 import java.util.List;
 import com.google.gson.annotations.Expose;
